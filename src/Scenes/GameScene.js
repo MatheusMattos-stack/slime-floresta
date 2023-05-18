@@ -21,8 +21,6 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  // fazer ainda
-
   addParallaxBackground() {
     for (let i = 1; i < 10; i += 1) {
       const background = this.add.tileSprite(0, 0, this.sys.game.config.width, this.model.backgroundHeight, `bg_${i}`).setOrigin(0, 0).setScrollFactor(0).setY(this.model.backgroundOffset);
@@ -45,12 +43,49 @@ export default class GameScene extends Phaser.Scene {
     this.objectLayer = this.map.createLayer('Objects', [bridgeSet, ObjectSet]);
   }
 
+  addPlayer() {
+    this.player = this.physics.add.sprite(this.model.playerStartPositionX, this.model.playerStartPositionY, 'idle_gun_0')
+    this.player.setSize(this.player.width / 2, this.player.height)
+    this.player.idDead = false;
+    this.player.setScale(this.model.playerScale)
+    this.playerHealth = 1;
+    this.canDoubleJump = true;
+    this.isWaking = false;
+    this.facing = 'right'
+  }
+
+  addZombieSound(zombie) {
+    if((zombie.anims.currentAnim.key === 'walk-zombie' || zombie.anims.currentAnim.key === 'run-zombie') && zombie.isWaking === false ) {
+      this.zombieEffect.play();
+      zombie.isWaking = true;
+    }
+  }
+
+  addEnemies() {
+    this.zombiesLayer = this.map.getObjectLayer('ZombiesLayer')
+    this.zombieLayer.objects.forEach(zombieObj => {
+      const zombie = this.zombies.get(zombieObj.x, zombieObj.y, 'zombie_idle_0').setScale(0.23)
+      zombie.play('idle-zombie')
+      zombie.health = 20;
+      zombie.dead = false;
+      zombie.hurt = false; 
+      zombie.isWaking = false; 
+      zombie.on('animationrepeat', () => {
+        this.addZombieSound(zombie)
+      })
+    });
+  }
+
   create() {
     this.model = this.sys.game.globals.model.gameOptions();
     this.sys.game.globals.bgMusic.stop();
 
 
     this.addSfxSounds();
+
+    // play bgmusic
+
+    this.bgMusic.play();
 
     this.addParallaxBackground();
 
@@ -60,6 +95,30 @@ export default class GameScene extends Phaser.Scene {
 
     // ground tilemap
     this.map = this.add.tilemap('tilemap');
+
+    this.addTilemapLayers();
+
+    // adicionar colisão a algumas camadas de blocos
+
+    this.groundLayer.setCollisionByExclusion(-1, true)
+    this.waterLayer.setCollisionByExclusion(-1, true)
+
+    // add Player
+
+    this.addPlayer();
+
+    // add grupo de inimigos
+
+    this.zombies = this.physics.add.group();
+    
+    // this.addEnemies()
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+  
+    // add colliders
+    this.physics.add.collider(this.player, this.groundLayer);
+    this.physics.add.collider(this.player, this.physicsLayer); 
+
   }
 
   update() {
