@@ -159,41 +159,6 @@ export default class PreloaderScene extends Phaser.Scene {
     this.load.image('hurt_gun_8', 'assets/Soldier-Guy-PNG/_Mode-Gun/04-Hurt/E_E_Gun__Hurt_008.png');
     this.load.image('hurt_gun_9', 'assets/Soldier-Guy-PNG/_Mode-Gun/04-Hurt/E_E_Gun__Hurt_009.png');
 
-    // Zombie Enemies
-
-    // idle
-    this.load.image('zombie_idle_0', 'assets/Zombie/Zombie1/animation/Idle1.png');
-    this.load.image('zombie_idle_1', 'assets/Zombie/Zombie1/animation/Idle2.png');
-    this.load.image('zombie_idle_2', 'assets/Zombie/Zombie1/animation/Idle3.png');
-    this.load.image('zombie_idle_3', 'assets/Zombie/Zombie1/animation/Idle4.png');
-
-    // walk
-    this.load.image('zombie_walk_0', 'assets/Zombie/Zombie1/animation/Walk1.png');
-    this.load.image('zombie_walk_1', 'assets/Zombie/Zombie1/animation/Walk2.png');
-    this.load.image('zombie_walk_2', 'assets/Zombie/Zombie1/animation/Walk3.png');
-    this.load.image('zombie_walk_3', 'assets/Zombie/Zombie1/animation/Walk4.png');
-    this.load.image('zombie_walk_4', 'assets/Zombie/Zombie1/animation/Walk5.png');
-    this.load.image('zombie_walk_5', 'assets/Zombie/Zombie1/animation/Walk6.png');
-
-    // run
-    this.load.image('zombie_run_0', 'assets/Zombie/Zombie1/animation/Run1.png');
-    this.load.image('zombie_run_1', 'assets/Zombie/Zombie1/animation/Run2.png');
-    this.load.image('zombie_run_2', 'assets/Zombie/Zombie1/animation/Run3.png');
-    this.load.image('zombie_run_3', 'assets/Zombie/Zombie1/animation/Run4.png');
-    this.load.image('zombie_run_4', 'assets/Zombie/Zombie1/animation/Run5.png');
-    this.load.image('zombie_run_5', 'assets/Zombie/Zombie1/animation/Run6.png');
-    this.load.image('zombie_run_6', 'assets/Zombie/Zombie1/animation/Run7.png');
-    this.load.image('zombie_run_7', 'assets/Zombie/Zombie1/animation/Run8.png');
-    this.load.image('zombie_run_8', 'assets/Zombie/Zombie1/animation/Run9.png');
-    this.load.image('zombie_run_9', 'assets/Zombie/Zombie1/animation/Run10.png');
-
-    // hurt
-    this.load.image('zombie_hurt_0', 'assets/Zombie/Zombie1/animation/Hurt1.png');
-    this.load.image('zombie_hurt_1', 'assets/Zombie/Zombie1/animation/Hurt2.png');
-    this.load.image('zombie_hurt_2', 'assets/Zombie/Zombie1/animation/Hurt3.png');
-    this.load.image('zombie_hurt_3', 'assets/Zombie/Zombie1/animation/Hurt4.png');
-    this.load.image('zombie_hurt_4', 'assets/Zombie/Zombie1/animation/Hurt5.png');
-
     // game sounds
     this.load.audio('bg_sound', ['assets/bg-music.ogg']);
     this.load.audio('zombie_dead_sound', ['assets/sfx/dead-zombie.mp3']);

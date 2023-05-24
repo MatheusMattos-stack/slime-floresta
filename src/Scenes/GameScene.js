@@ -119,9 +119,74 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.groundLayer);
     this.physics.add.collider(this.player, this.physicsLayer); 
 
+    // create main camera
+
+    this.myCam = this.cameras.main  
+    this.myCam.setBounds(0, 0, this.sys.game.config.width * 24, this.sys.game.config.height)
+
+    this.myCam.startFollow(this.player)
+  }
+
+  // rolagem de fundo
+
+  backgroundScroll() {
+    this.backgroundLayers.forEach(background => {
+      background.tilePositionX = this.myCam.scrollX * this.scrollMultiply;
+      this.scrollMultiply += 0.1;
+    })
+    this.scrollMultiply = 0.1;
+  }
+
+  playerProperties(side, model) {
+    let velociy = model.velocity
+    let scale = model.playerScale
+    let offsetX
+
+    if(side === 'left') {
+      velociy *= -1
+      scale *= -1
+      offsetX = model.leftPlayerOffset
+    } else {
+      offsetX = model.rightPlayerOffset
+    }
+    return {
+      velociy,
+      scale,
+      offsetX,
+    }
+  }
+
+  playerIdle() {
+    this.isWaking = false;
+    this.player.play('idle-gun', true);
+    this.player.setVelocityX(0);
+  }
+
+  playerWalkAnimation() {
+    if (this.player.body.onFloor()) {
+      this.player.anims.play('run-gun', true);
+    }
+  }
+
+  playerMove(side) {
+    const playerSideProperties = this.playerProperties(side, this.model)
+    this.isWaking = true
+    this.facing = side
+    this.player.setVelocityX(playerSideProperties.velociy)
+    this.player.setOffset(playerSideProperties.offsetX, 0)
+    this.player.scaleX = playerSideProperties.scale
   }
 
   update() {
-   
+    // player movement
+
+   if (this.cursors.left.isDown && this.player.x > 0 && !this.player.isDead) {
+      this.playerMove('left');
+      this.playerWalkAnimation();
+    } else if (this.cursors.right.isDown && this.player.x < this.model.tileLength
+      && !this.player.isDead) {
+      this.playerMove('right');
+      this.playerWalkAnimation();
+    }
 }
 }
