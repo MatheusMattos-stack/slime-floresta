@@ -77,9 +77,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // score
+    this.score = 0;
+    
     this.model = this.sys.game.globals.model.gameOptions();
     this.sys.game.globals.bgMusic.stop();
-
 
     this.addSfxSounds();
 
@@ -99,26 +101,26 @@ export default class GameScene extends Phaser.Scene {
     this.addTilemapLayers();
 
     // adicionar colisão a algumas camadas de blocos
-
     this.groundLayer.setCollisionByExclusion(-1, true)
     this.waterLayer.setCollisionByExclusion(-1, true)
 
     // add Player
-
     this.addPlayer();
 
     // add grupo de inimigos
-
     this.zombies = this.physics.add.group();
     
     // this.addEnemies()
-
     this.cursors = this.input.keyboard.createCursorKeys();
   
     // add colliders
     this.physics.add.collider(this.player, this.groundLayer);
     this.physics.add.collider(this.player, this.physicsLayer); 
-
+    this.physics.add.collider(this.groundLayer, this.zombies);
+    this.physics.add.collider(this.player, this.waterLayer, (player) => {
+      player.isDead = true;
+    })
+    
     // create main camera
 
     this.myCam = this.cameras.main  
@@ -127,8 +129,11 @@ export default class GameScene extends Phaser.Scene {
     this.myCam.startFollow(this.player)
   }
 
-  // rolagem de fundo
+  scoreUp(score) {
+    return score  + 10
+  }
 
+  // rolagem de fundo
   backgroundScroll() {
     this.backgroundLayers.forEach(background => {
       background.tilePositionX = this.myCam.scrollX * this.scrollMultiply;
@@ -138,22 +143,22 @@ export default class GameScene extends Phaser.Scene {
   }
 
   playerProperties(side, model) {
-    let velociy = model.velocity
-    let scale = model.playerScale
-    let offsetX
+    let velocity = model.playerVelocity;
+    let scale = model.playerScale;
+    let offsetX;
 
-    if(side === 'left') {
-      velociy *= -1
-      scale *= -1
-      offsetX = model.leftPlayerOffset
+    if (side === 'left') {
+      velocity *= -1;
+      scale *= -1;
+      offsetX = model.leftPlayerOffset;
     } else {
-      offsetX = model.rightPlayerOffset
+      offsetX = model.rightPlayerOffset;
     }
     return {
-      velociy,
-      scale,
+      velocity,
       offsetX,
-    }
+      scale,
+    };
   }
 
   playerIdle() {
@@ -169,18 +174,50 @@ export default class GameScene extends Phaser.Scene {
   }
 
   playerMove(side) {
-    const playerSideProperties = this.playerProperties(side, this.model)
-    this.isWaking = true
-    this.facing = side
-    this.player.setVelocityX(playerSideProperties.velociy)
-    this.player.setOffset(playerSideProperties.offsetX, 0)
-    this.player.scaleX = playerSideProperties.scale
+    const playerSideProperties = this.playerProperties(side, this.model);
+    this.isWaking = true;
+    this.facing = side;
+    this.player.setVelocityX(playerSideProperties.velocity);
+    this.player.setOffset(playerSideProperties.offsetX, 0);
+    this.player.scaleX = playerSideProperties.scale;
+  }
+
+  // killGame(boolean) {
+  //   this.backgroundLayer = []
+
+  //   this.scene.start('GameOver', {
+  //     complete: boolean,
+  //     score: this.score,
+  //   })
+  //   this.bgMusic.stop()
+  //   this.zombieEffect.stop()
+  // }
+
+  // killPlayer() {
+  //   this.player.setVelocity(0);
+  //   this.player.play('hurt-gun', true);
+  //   this.player.on('animationcomplete', () => {
+  //     this.killGame(false);
+  //   });
+  // }
+
+  playerJump(jumpPressed) {
+    if (!jumpPressed) return;
+    if (this.player.body.onFloor()) {
+      this.canDoubleJump = true;
+      this.player.anims.play('jump-gun');
+      this.player.body.setVelocityY(-200);
+    } else if (this.canDoubleJump) {
+      this.player.body.setVelocityY(-200);
+      this.player.anims.play('jump-gun');
+      this.canDoubleJump = false;
+    }
   }
 
   update() {
     // player movement
 
-   if (this.cursors.left.isDown && this.player.x > 0 && !this.player.isDead) {
+    if (this.cursors.left.isDown && this.player.x > 0 && !this.player.isDead) {
       this.playerMove('left');
       this.playerWalkAnimation();
     } else if (this.cursors.right.isDown && this.player.x < this.model.tileLength
@@ -188,5 +225,12 @@ export default class GameScene extends Phaser.Scene {
       this.playerMove('right');
       this.playerWalkAnimation();
     }
-}
+
+    const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up);
+    this.playerJump(jumpPressed);
+
+
+    this.scoreText.setX(this.myCam.scrollX + 20);
+    this.backgroundScroll();
+  }
 }
