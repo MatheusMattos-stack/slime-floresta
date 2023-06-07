@@ -1,6 +1,7 @@
 /* eslint class-methods-use-this: ["error",
 { "exceptMethods": ["scoreUp", "shootBullet", "playerProperties"] }] */
 import Phaser from 'phaser';
+import BulletGroup from '../Objects/bulletGroup';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -55,7 +56,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   addZombieSound(zombie) {
-    if((zombie.anims.currentAnim.key === 'walk-zombie' || zombie.anims.currentAnim.key === 'run-zombie') && zombie.isWaking === false ) {
+    if ((zombie.anims.currentAnim.key === 'walk-zombie' || zombie.anims.currentAnim.key === 'run-zombie') && zombie.isWaking === false) {
       this.zombieEffect.play();
       zombie.isWaking = true;
     }
@@ -68,8 +69,8 @@ export default class GameScene extends Phaser.Scene {
       zombie.play('idle-zombie')
       zombie.health = 20;
       zombie.dead = false;
-      zombie.hurt = false; 
-      zombie.isWaking = false; 
+      zombie.hurt = false;
+      zombie.isWaking = false;
       zombie.on('animationrepeat', () => {
         this.addZombieSound(zombie)
       })
@@ -79,7 +80,7 @@ export default class GameScene extends Phaser.Scene {
   create() {
     // score
     this.score = 0;
-    
+
     this.model = this.sys.game.globals.model.gameOptions();
     this.sys.game.globals.bgMusic.stop();
 
@@ -109,28 +110,85 @@ export default class GameScene extends Phaser.Scene {
 
     // add grupo de inimigos
     this.zombies = this.physics.add.group();
-    
+
     // this.addEnemies()
     this.cursors = this.input.keyboard.createCursorKeys();
-  
+    this.shotKeyObject = this.input.keyboard.addKey('SPACE');
+
+    // bullets
+
+    this.bulletGroup = new BulletGroup(this);
+    this.addShotEvent();
+
     // add colliders
     this.physics.add.collider(this.player, this.groundLayer);
-    this.physics.add.collider(this.player, this.physicsLayer); 
+    this.physics.add.collider(this.player, this.physicsLayer);
     this.physics.add.collider(this.groundLayer, this.zombies);
     this.physics.add.collider(this.player, this.waterLayer, (player) => {
       player.isDead = true;
     })
-    
+    this.physics.add.collider(this.player, this.zombie, (player) => {
+      player.isDead = true;
+    })
+    this.physics.add.collider(this.zombies, this.bulletGroup, (zombie) => {
+      // zombie balas
+      zombie.health -= 1;
+
+      if (zombie.health <= 0 && zombie.dead === false) {
+        zombie.play('dead-zombie');
+        zombie.setSize(zombie.width * 2, zombie.height / 2 - 20);
+        zombie.dead = true;
+      } else if (zombie.dead === false) {
+        zombie.hurt = true;
+      }
+    })
+
     // create main camera
 
-    this.myCam = this.cameras.main  
+    this.myCam = this.cameras.main
     this.myCam.setBounds(0, 0, this.sys.game.config.width * 24, this.sys.game.config.height)
 
     this.myCam.startFollow(this.player)
   }
 
   scoreUp(score) {
-    return score  + 10
+    return score + 10
+  }
+  
+  // adicionar evento de tiro
+  addShotEvent() {
+    this.input.keyboard.on('keydown-SPACE', () => {
+      this.shootBullet(this.isWaking, this.facing, this.bulletGroup, this.player, this.gunShot);
+    }, this);
+  }
+
+  //atirar bala
+  shootBullet(walking, facing, bulletGroup, player, gunShot) {
+    if (!walking) {
+      gunShot.play()
+      if (facing === 'right') {
+        bulletGroup.fireBullet(player.x + 5, player.y + 10, 'right')
+      } else {
+        bulletGroup.fireBullet(player.x + 5, player.y + 10, 'left')
+      }
+    }
+  }
+
+  // definir escala e velocidade do inimigo
+  setEnemyScaleAndVelocity(zombieVelocity, zombie) {
+    if (this.player.x > zombie.x) {
+      if (!zombie.dead) {
+        zombie.setOffset(0, 0);
+        zombie.scaleX = 0.23;
+        zombie.setVelocityX(zombieVelocity * -1);
+      }
+    } else if (!zombie.dead) {
+      zombie.setOffset(222, 0);
+      zombie.scaleX = -0.23;
+      zombie.setVelocityX(zombieVelocity * -1);
+    } else {
+      zombie.setOffset(400, 0)
+    }
   }
 
   // rolagem de fundo
@@ -167,6 +225,7 @@ export default class GameScene extends Phaser.Scene {
     this.player.setVelocityX(0);
   }
 
+  // caminhada do jogador
   playerWalkAnimation() {
     if (this.player.body.onFloor()) {
       this.player.anims.play('run-gun', true);
@@ -193,13 +252,13 @@ export default class GameScene extends Phaser.Scene {
   //   this.zombieEffect.stop()
   // }
 
-  // killPlayer() {
-  //   this.player.setVelocity(0);
-  //   this.player.play('hurt-gun', true);
-  //   this.player.on('animationcomplete', () => {
-  //     this.killGame(false);
-  //   });
-  // }
+  killPlayer() {
+    this.player.setVelocity(0);
+    this.player.play('hurt-gun', true);
+    this.player.on('animationcomplete', () => {
+      this.killGame(false);
+    });
+  }
 
   playerJump(jumpPressed) {
     if (!jumpPressed) return;
@@ -214,6 +273,12 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  killZombie(zombie) {
+    this.zombie.killAndHide(zombie);
+    this.zombie.remove(zombie);
+    this.zombieEffect.stop();
+  }
+
   update() {
     // player movement
 
@@ -224,11 +289,52 @@ export default class GameScene extends Phaser.Scene {
       && !this.player.isDead) {
       this.playerMove('right');
       this.playerWalkAnimation();
+    } else if(!this.shotKeyObject.isDown && this.player.idDead === false) {
+      this.playerIdle(); 
+    } else if(this.player.idDead === true) {
+      this.killPlayer()
     }
 
     const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up);
     this.playerJump(jumpPressed);
 
+
+    this.shotKeyObject.on('down', ()=> {
+      this.player.setVelocityX(0);
+      this.player.anims.play('shot-gun', false);
+    }, this); 
+
+    this.zombies.children.each((zombie) => {
+      if(this.myCam.scrollX + 800 > zombie.x) {
+        if(zombie.y >= 600) {
+          this.killZombie(zombie);
+        }
+
+        const zombieVelocity = 20;
+
+        this.setEnemyScaleAndVelocity(zombieVelocity, zombie)
+
+        if(zombie.dead) {
+          zombie.setVelocity(0)
+          zombie.on('animationcomplete', () => {
+            this.killZombie(zombie);
+            this.score = this.scoreUp(this.score);
+            this.scoreText.setText(`Score: ${this.score}`)
+          })
+        } else if (Math.abs(this.player.x - zombie.x) < 300 && !zombie.dead && !zombie.hurt) {
+          const zombieSprintVelocity = 100;
+          this.setEnemyScaleAndVelocity(zombieSprintVelocity, zombie);
+          zombie.anims.play('run-zombie', true);
+        } else if (zombie.hurt) {
+          zombie.anims.play('hurt-zombie', true);
+          zombie.on('animationcomplete', () => {
+            zombie.hurt = false 
+          })
+        } else {
+          zombie.anims.play('walk-zombie', true)
+        }
+      }
+    }, this)
 
     this.scoreText.setX(this.myCam.scrollX + 20);
     this.backgroundScroll();
