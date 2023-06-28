@@ -16,7 +16,6 @@ class BulletGroup extends Phaser.Physics.Arcade.Group {
   }
 
   fireBullet(x, y, facing) {
-    // get fist available sprite in the group
     const bullet = this.getFirstDead(false);
     if (bullet) {
       bullet.fire(x, y, facing);
