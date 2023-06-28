@@ -101,7 +101,7 @@ export default class PreloaderScene extends Phaser.Scene {
     this.load.image('bg_8', 'assets/Background/Layer_0003_6.png');
     this.load.image('bg_9', 'assets/Background/Layer_0002_7.png');
     this.load.image('bg_10', 'assets/Background/Layer_0001_8.png');
-    this.load.image('bg_11', 'assets/Background/Layer_0000_9.png');
+    this.load.image('bg_11', 'assets/Background/Layer_0000_9.png'); 
 
     // tilemaps
     // tiles
